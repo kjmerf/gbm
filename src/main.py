@@ -26,12 +26,12 @@ def get_historical_stats(file, interval_length=3600):
             raw_dt = datetime.fromtimestamp(unixtime, tz=timezone.utc)
             standard_dt = raw_dt.replace(second=0, minute=0)
             price = row[1]
-            log_price = math.log(price, 10)
+            log_price = math.log(price)
 
             if last_dt is not None:
                 try:
                     assert standard_dt - last_dt == timedelta(seconds=interval_length)
-                    deltas.append(abs(last_log_price - log_price))
+                    deltas.append(last_log_price - log_price)
 
                 except AssertionError:
                     if standard_dt - last_dt < timedelta(seconds=interval_length):
@@ -144,4 +144,5 @@ if __name__ == "__main__":
         args.target_price,
     )
     pp = pprint.PrettyPrinter()
+    pp.pprint(historical_stats)
     pp.pprint(results)
