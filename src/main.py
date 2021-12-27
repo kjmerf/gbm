@@ -11,8 +11,8 @@ def get_dt_from_string(date_string):
     return datetime.strptime(date_string, "%Y-%m-%d-%H").replace(tzinfo=timezone.utc)
 
 
-def get_historical_stats(file, interval_length=3600):
-    """Get historical stats from the data file. We expect hourly intervals!"""
+def get_historical_stats(file):
+    """Get historical stats from the data file"""
 
     with open(file) as f:
         data = json.load(f)
@@ -23,31 +23,26 @@ def get_historical_stats(file, interval_length=3600):
         for row in data["prices"]:
             # the unixtime from the API has three extra digits
             unixtime = int(str(row[0])[:-3])
-            raw_dt = datetime.fromtimestamp(unixtime, tz=timezone.utc)
-            standard_dt = raw_dt.replace(second=0, minute=0)
+            dt = datetime.fromtimestamp(unixtime, tz=timezone.utc)
             price = row[1]
             log_price = math.log(price)
 
             if last_dt is not None:
                 try:
-                    assert standard_dt - last_dt == timedelta(seconds=interval_length)
-                    deltas.append(last_log_price - log_price)
+                    assert dt > last_dt
+                    deltas.append(log_price - last_log_price)
 
                 except AssertionError:
-                    if standard_dt - last_dt < timedelta(seconds=interval_length):
-                        # an hour hasn't passed since the last price, so we can skip this one
-                        continue
-                    else:
-                        raise ValueError(
-                            f"Interval missing before {standard_dt}. Data must be in order!"
-                        )
+                    raise ValueError(
+                        f"{dt} was followed by {last_dt}. Data must be in ord!"
+                    )
 
-            last_dt = standard_dt
+            last_dt = dt
             last_log_price = log_price
 
     return {
         "sigma": statistics.stdev(deltas),
-        "last_dt": standard_dt,
+        "last_dt": dt,
         "last_price": price,
     }
 
@@ -82,7 +77,7 @@ def gbm_iter(initial_price, mu, sigma, t, iterations):
     return current_price, max_price, min_price
 
 
-def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_price):
+def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_price, verbosity=True):
     """Runs the gbm_iter function many times to simulate many instances of the price forward in time"""
 
     ended_over = 0
@@ -91,7 +86,10 @@ def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_pric
     under_at_any_point = 0
 
     for i in range(trials):
-        print(f"Running trial {i}")
+
+        if verbosity is True:
+            print(f"Running trial {i}")
+
         ending_price, max_price, min_price = gbm_iter(
             initial_price, mu, sigma, t, iterations
         )
@@ -128,6 +126,12 @@ if __name__ == "__main__":
         default=10000,
         type=int,
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        help="Print the number of the trial currently running",
+        action="store_true",
+    )
     args = parser.parse_args()
 
     target_dt = get_dt_from_string(args.target_date_string_utc)
@@ -142,6 +146,7 @@ if __name__ == "__main__":
         iterations,
         args.number_of_trials,
         args.target_price,
+        args.verbose,
     )
     pp = pprint.PrettyPrinter()
     pp.pprint(historical_stats)

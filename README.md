@@ -9,7 +9,7 @@ For details see https://www.coingecko.com/en/api/documentation.
 
 To run the program, you can use:
 
-```python3 src/main.py 2022-01-01-00 4500 -n 10000 /tmp/data.json```
+```python3 src/main.py 2022-01-01-00 4500 -n 10000 -v /tmp/data.json```
 
 To view all the required and optional arguments, see:
 
