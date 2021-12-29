@@ -34,7 +34,7 @@ def get_historical_stats(file):
 
                 except AssertionError:
                     raise ValueError(
-                        f"{dt} was followed by {last_dt}. Data must be in ord!"
+                        f"{dt} was followed by {last_dt}. Data must be in order!"
                     )
 
             last_dt = dt
@@ -77,7 +77,7 @@ def gbm_iter(initial_price, mu, sigma, t, iterations):
     return current_price, max_price, min_price
 
 
-def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_price, verbosity=True):
+def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_price, verbose=True):
     """Runs the gbm_iter function many times to simulate many instances of the price forward in time"""
 
     ended_over = 0
@@ -87,7 +87,7 @@ def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_pric
 
     for i in range(trials):
 
-        if verbosity is True:
+        if verbose is True:
             print(f"Running trial {i}")
 
         ending_price, max_price, min_price = gbm_iter(
