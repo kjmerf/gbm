@@ -42,6 +42,7 @@ def get_historical_stats(file):
 
     return {
         "sigma": statistics.stdev(deltas),
+        "mu": statistics.mean(deltas),
         "last_dt": dt,
         "last_price": price,
     }
@@ -53,14 +54,14 @@ def get_iterations(target_dt, initial_dt):
     return int(delta.total_seconds() // 60 // 60)
 
 
-def gbm(initial_price, mu, sigma, t):
+def gbm(initial_price, mu, sigma, t=1):
     """Geometric Brownian Motion function that gives the price at time t"""
 
-    Wt = statistics.NormalDist(0, t).samples(1)[0]
-    return initial_price * math.exp((mu - (sigma ** 2) / 2) * t + sigma * Wt)
+    wiener = statistics.NormalDist(0, t).samples(1)[0]
+    return initial_price * math.exp((mu - (sigma ** 2) / 2) * t + sigma * wiener)
 
 
-def gbm_iter(initial_price, mu, sigma, t, iterations):
+def gbm_iter(initial_price, mu, sigma, iterations):
     """Runs the gbm function many times sequentially to simulate the price moving forward in time"""
 
     current_price = initial_price
@@ -68,7 +69,7 @@ def gbm_iter(initial_price, mu, sigma, t, iterations):
     min_price = initial_price
 
     for i in range(iterations):
-        current_price = gbm(current_price, mu, sigma, t)
+        current_price = gbm(current_price, mu, sigma)
         if current_price > max_price:
             max_price = current_price
         elif current_price < min_price:
@@ -77,7 +78,7 @@ def gbm_iter(initial_price, mu, sigma, t, iterations):
     return current_price, max_price, min_price
 
 
-def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_price, verbose=True):
+def gbm_trials(initial_price, mu, sigma, iterations_per_trial, trials, target_price, verbose=True):
     """Runs the gbm_iter function many times to simulate many instances of the price forward in time"""
 
     ended_over = 0
@@ -91,7 +92,7 @@ def gbm_iter_trials(initial_price, mu, sigma, t, iterations, trials, target_pric
             print(f"Running trial {i}")
 
         ending_price, max_price, min_price = gbm_iter(
-            initial_price, mu, sigma, t, iterations
+            initial_price, mu, sigma, iterations_per_trial
         )
         if ending_price >= target_price:
             ended_over += 1
@@ -136,14 +137,13 @@ if __name__ == "__main__":
 
     target_dt = get_dt_from_string(args.target_date_string_utc)
     historical_stats = get_historical_stats(args.file)
-    iterations = get_iterations(target_dt, historical_stats["last_dt"])
+    iterations_per_trial = get_iterations(target_dt, historical_stats["last_dt"])
 
-    results = gbm_iter_trials(
+    results = gbm_trials(
         historical_stats["last_price"],
-        0,
+        historical_stats["mu"],
         historical_stats["sigma"],
-        1,
-        iterations,
+        iterations_per_trial,
         args.number_of_trials,
         args.target_price,
         args.verbose,
