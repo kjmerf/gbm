@@ -107,7 +107,7 @@ def gbm_trials(initial_price, mu, sigma, iterations_per_trial, trials, target_pr
         "percent_ended_over": (ended_over * 100) / trials,
         "percent_ended_under": (ended_under * 100) / trials,
         "percent_over_at_any_point": (over_at_any_point * 100) / trials,
-        "perent_under_at_any_point": (under_at_any_point * 100) / trials,
+        "percent_under_at_any_point": (under_at_any_point * 100) / trials,
     }
 
 
@@ -128,6 +128,12 @@ if __name__ == "__main__":
         type=int,
     )
     parser.add_argument(
+        "-m",
+        "--mu",
+        help="Calculate historical drift and use it as an input in the simulations",
+        action="store_true",
+    )
+    parser.add_argument(
         "-v",
         "--verbose",
         help="Print the number of the trial currently running",
@@ -141,7 +147,7 @@ if __name__ == "__main__":
 
     results = gbm_trials(
         historical_stats["last_price"],
-        historical_stats["mu"],
+        historical_stats["mu"] if args.mu is True else 0,
         historical_stats["sigma"],
         iterations_per_trial,
         args.number_of_trials,
@@ -149,5 +155,4 @@ if __name__ == "__main__":
         args.verbose,
     )
     pp = pprint.PrettyPrinter()
-    pp.pprint(historical_stats)
     pp.pprint(results)
