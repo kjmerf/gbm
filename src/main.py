@@ -88,9 +88,7 @@ def gbm_iter(initial_price, mu, sigma, iterations):
     return current_price, max_price, min_price
 
 
-def gbm_trials(
-    initial_price, mu, sigma, iterations_per_trial, trials, target_price, verbose=True
-):
+def gbm_trials(initial_price, mu, sigma, iterations_per_trial, trials, target_price):
     """Runs the gbm_iter function many times to simulate many instances of the price forward in time"""
 
     ended_over = 0
@@ -100,8 +98,7 @@ def gbm_trials(
 
     for i in range(trials):
 
-        if verbose is True:
-            print(f"Running trial {i}")
+        print(f"Running trial {i}")
 
         ending_price, max_price, min_price = gbm_iter(
             initial_price, mu, sigma, iterations_per_trial
@@ -147,12 +144,6 @@ if __name__ == "__main__":
         help="Calculate historical drift and use it as an input in the simulations",
         action="store_true",
     )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        help="Print the number of the trial currently running",
-        action="store_true",
-    )
     args = parser.parse_args()
 
     target_dt = get_dt_from_string(args.target_date_string_utc)
@@ -167,7 +158,6 @@ if __name__ == "__main__":
         iterations_per_trial,
         args.number_of_trials,
         args.target_price,
-        args.verbose,
     )
     pp = pprint.PrettyPrinter()
     print("\n---Arguments---\n")

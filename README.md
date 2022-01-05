@@ -4,7 +4,7 @@ This repo can be used to compute the likelihood that a given cyptocurrency reach
 
 To run the program, you can use:
 
-```python3 src/main.py 2022-01-12-17 4000 ethereum -v```
+```python3 src/main.py 2022-01-12-17 4000 ethereum```
 
 To view all the required and optional arguments, see:
 
