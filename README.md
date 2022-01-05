@@ -1,19 +1,19 @@
 # gbm
 
 This repo can be used to compute the likelihood that a given cyptocurrency reaches a target price on or before a target date.
-The program relies on hourly historical data which can be downloaded with:
-
-```curl -X 'GET' 'https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=90' -H 'accept: application/json' > /tmp/data.json```
-
-For details see https://www.coingecko.com/en/api/documentation.
 
 To run the program, you can use:
 
-```python3 src/main.py 2022-01-11-17 55744.50 -v /tmp/data.json```
+```python3 src/main.py 2022-01-12-17 4000 ethereum -v```
 
 To view all the required and optional arguments, see:
 
 ```python3 src/main.py --help```
+
+The coin id must come from this list:
+```curl -X 'GET' 'https://api.coingecko.com/api/v3/coins/list' -H 'accept: application/json'```
+
+In most cases you will probably just use ```bitcoin```, ```ethereum```, or ```cardano```.
 
 To run the unit tests, you can use:
 

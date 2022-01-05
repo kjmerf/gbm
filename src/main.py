@@ -5,40 +5,50 @@ import math
 import pprint
 import statistics
 
+import requests
+
+
+def get_data(coin_id, days, target_currency="usd"):
+
+    print("Getting historical data from Coin Gecko...")
+    payload = {"days": days, "vs_currency": target_currency}
+    response = requests.get(
+        f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart", params=payload
+    )
+    response.raise_for_status()
+    return response.json()
+
 
 def get_dt_from_string(date_string):
 
     return datetime.strptime(date_string, "%Y-%m-%d-%H").replace(tzinfo=timezone.utc)
 
 
-def get_historical_stats(file):
-    """Get historical stats from the data file"""
+def get_historical_stats(data):
 
-    with open(file) as f:
-        data = json.load(f)
-        last_dt = None
-        last_log_price = None
-        deltas = []
+    last_dt = None
+    last_log_price = None
+    deltas = []
 
-        for row in data["prices"]:
-            # the unixtime from the API has three extra digits
-            unixtime = int(str(row[0])[:-3])
-            dt = datetime.fromtimestamp(unixtime, tz=timezone.utc)
-            price = row[1]
-            log_price = math.log(price)
+    for row in data["prices"]:
+        # the unixtime from the API has three extra digits
+        unixtime = int(str(row[0])[:-3])
+        dt = datetime.fromtimestamp(unixtime, tz=timezone.utc)
+        price = row[1]
+        log_price = math.log(price)
 
-            if last_dt is not None:
-                try:
-                    assert dt > last_dt
-                    deltas.append(log_price - last_log_price)
+        if last_dt is not None:
+            try:
+                assert dt > last_dt
+                deltas.append(log_price - last_log_price)
 
-                except AssertionError:
-                    raise ValueError(
-                        f"{dt} was followed by {last_dt}. Data must be in order!"
-                    )
+            except AssertionError:
+                raise ValueError(
+                    f"{dt} was followed by {last_dt}. Data must be in order!"
+                )
 
-            last_dt = dt
-            last_log_price = log_price
+        last_dt = dt
+        last_log_price = log_price
 
     return {
         "sigma": statistics.stdev(deltas),
@@ -78,7 +88,9 @@ def gbm_iter(initial_price, mu, sigma, iterations):
     return current_price, max_price, min_price
 
 
-def gbm_trials(initial_price, mu, sigma, iterations_per_trial, trials, target_price, verbose=True):
+def gbm_trials(
+    initial_price, mu, sigma, iterations_per_trial, trials, target_price, verbose=True
+):
     """Runs the gbm_iter function many times to simulate many instances of the price forward in time"""
 
     ended_over = 0
@@ -118,8 +130,18 @@ if __name__ == "__main__":
         "target_date_string_utc",
         help="The date and hour up to which to run the simulation (e.g. 2021-01-01-05)",
     )
-    parser.add_argument("target_price", help="The price for which to gather statistics", type=float)
-    parser.add_argument("file", help="The file containing historical data")
+    parser.add_argument(
+        "target_price", help="The price for which to gather statistics", type=float
+    )
+    parser.add_argument("coin_id", help="The id of the coin used in the simulation")
+    parser.add_argument(
+        "-d",
+        "--days_to_look_back",
+        help="The number of days in the past to consider when calculating historical sigma and mu (must be between 1 and 90)",
+        type=int,
+        default=90,
+        choices=range(1, 91),
+    )
     parser.add_argument(
         "-n",
         "--number_of_trials",
@@ -142,7 +164,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     target_dt = get_dt_from_string(args.target_date_string_utc)
-    historical_stats = get_historical_stats(args.file)
+    data = get_data(args.coin_id, args.days_to_look_back)
+    historical_stats = get_historical_stats(data)
     iterations_per_trial = get_iterations(target_dt, historical_stats["last_dt"])
 
     results = gbm_trials(
@@ -155,4 +178,10 @@ if __name__ == "__main__":
         args.verbose,
     )
     pp = pprint.PrettyPrinter()
+    print("\n---Arguments---\n")
+    pp.pprint(vars(args))
+    print("\n---Historical stats---\n")
+    pp.pprint(historical_stats)
+    print("\n---Results---\n")
     pp.pprint(results)
+    print("\n")
