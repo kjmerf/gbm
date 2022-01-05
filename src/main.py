@@ -10,7 +10,6 @@ import requests
 
 def get_data(coin_id, days=90, target_currency="usd"):
 
-    print("Getting historical data from Coin Gecko...")
     payload = {"days": days, "vs_currency": target_currency}
     response = requests.get(
         f"https://api.coingecko.com/api/v3/coins/{coin_id}/market_chart", params=payload
@@ -62,6 +61,13 @@ def get_iterations(target_dt, initial_dt):
 
     delta = target_dt - initial_dt
     return int(delta.total_seconds() // 60 // 60)
+
+
+def get_cdf_prob(sigma, n, last_price, target_price):
+
+    standard_dev = math.sqrt(n * (sigma * last_price) ** 2)
+    normal = statistics.NormalDist(mu=last_price, sigma=standard_dev)
+    return normal.cdf(target_price)
 
 
 def gbm(initial_price, mu, sigma, t=1):
@@ -150,8 +156,13 @@ if __name__ == "__main__":
     data = get_data(args.coin_id)
     historical_stats = get_historical_stats(data)
     iterations_per_trial = get_iterations(target_dt, historical_stats["last_dt"])
-
-    results = gbm_trials(
+    cdf_prob = get_cdf_prob(
+        historical_stats["sigma"],
+        iterations_per_trial,
+        historical_stats["last_price"],
+        args.target_price,
+    )
+    sim_results = gbm_trials(
         historical_stats["last_price"],
         historical_stats["mu"] if args.mu is True else 0,
         historical_stats["sigma"],
@@ -160,10 +171,7 @@ if __name__ == "__main__":
         args.target_price,
     )
     pp = pprint.PrettyPrinter()
-    print("\n---Arguments---\n")
     pp.pprint(vars(args))
-    print("\n---Historical stats---\n")
     pp.pprint(historical_stats)
-    print("\n---Results---\n")
-    pp.pprint(results)
-    print("\n")
+    pp.pprint({"cdf_probability": cdf_prob})
+    pp.pprint(sim_results)
