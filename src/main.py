@@ -8,7 +8,7 @@ import statistics
 import requests
 
 
-def get_data(coin_id, days, target_currency="usd"):
+def get_data(coin_id, days=90, target_currency="usd"):
 
     print("Getting historical data from Coin Gecko...")
     payload = {"days": days, "vs_currency": target_currency}
@@ -135,14 +135,6 @@ if __name__ == "__main__":
     )
     parser.add_argument("coin_id", help="The id of the coin used in the simulation")
     parser.add_argument(
-        "-d",
-        "--days_to_look_back",
-        help="The number of days in the past to consider when calculating historical sigma and mu (must be between 1 and 90)",
-        type=int,
-        default=90,
-        choices=range(1, 91),
-    )
-    parser.add_argument(
         "-n",
         "--number_of_trials",
         help="Number of trials (simulations) to run",
@@ -164,7 +156,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     target_dt = get_dt_from_string(args.target_date_string_utc)
-    data = get_data(args.coin_id, args.days_to_look_back)
+    data = get_data(args.coin_id)
     historical_stats = get_historical_stats(data)
     iterations_per_trial = get_iterations(target_dt, historical_stats["last_dt"])
 
