@@ -2,7 +2,7 @@
 
 This repo can be used to compute the likelihood that a given cyptocurrency reaches a target price on or before a target date.
 
-To run the program, you can use:
+To run the program, you can use something like:
 
 ```python3 src/main.py 2022-01-12-17 4000 ethereum```
 
