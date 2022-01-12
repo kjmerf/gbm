@@ -2,9 +2,9 @@
 
 This repo can be used to compute the likelihood that a given cyptocurrency reaches a target price on or before a target date.
 
-To run the program, you can use something like:
+For example, to test the likelihood that ETH will reach 5K by April 2022, you could run:
 
-```python3 src/main.py 2022-01-12-17 4000 ethereum```
+```python3 src/main.py 2022-04-01-00 5000 ethereum -n 1000```
 
 To view all the required and optional arguments, see:
 

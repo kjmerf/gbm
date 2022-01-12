@@ -130,7 +130,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "target_date_string_utc",
+        "target_date_utc",
         help="The date and hour up to which to run the simulation (e.g. 2021-01-01-05)",
     )
     parser.add_argument(
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     parser.add_argument("coin_id", help="The id of the coin used in the simulation")
     parser.add_argument(
         "-n",
-        "--number_of_trials",
+        "--trials",
         help="Number of trials (simulations) to run",
         default=10000,
         type=int,
@@ -152,7 +152,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    target_dt = get_dt_from_string(args.target_date_string_utc)
+    target_dt = get_dt_from_string(args.target_date_utc)
     data = get_data(args.coin_id)
     historical_stats = get_historical_stats(data)
     iterations_per_trial = get_iterations(target_dt, historical_stats["last_dt"])
@@ -167,7 +167,7 @@ if __name__ == "__main__":
         historical_stats["mu"] if args.mu is True else 0,
         historical_stats["sigma"],
         iterations_per_trial,
-        args.number_of_trials,
+        args.trials,
         args.target_price,
     )
     pp = pprint.PrettyPrinter()
